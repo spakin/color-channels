@@ -84,6 +84,22 @@ func MergeLab(imgs []*image.Gray) image.Image {
 	return merged
 }
 
+// MergeLuv merges L*, u*, and v* channels into a single image.
+func MergeLuv(imgs []*image.Gray) image.Image {
+	bnds := imgs[0].Bounds()
+	merged := image.NewNRGBA(bnds)
+	for y := bnds.Min.Y; y < bnds.Max.Y; y++ {
+		for x := bnds.Min.X; x < bnds.Max.X; x++ {
+			L := float64(imgs[0].GrayAt(x, y).Y) / 255.0
+			u := float64(imgs[1].GrayAt(x, y).Y)*2.0/255.0 - 1.0
+			v := float64(imgs[2].GrayAt(x, y).Y)*2.0/255.0 - 1.0
+			clr := colorful.Luv(L, u, v).Clamped()
+			merged.Set(x, y, clr)
+		}
+	}
+	return merged
+}
+
 // WritePNG writes an arbitrary image to a named PNG file.  If the file is "",
 // write to standard output.
 func WritePNG(fn string, img image.Image) error {
@@ -142,6 +158,8 @@ func main() {
 		merged = MergeHCL(channels)
 	case "lab":
 		merged = MergeLab(channels)
+	case "luv":
+		merged = MergeLuv(channels)
 	default:
 		notify.Fatal(`--space requires an argument of either "hcl" or "lab"`)
 	}
