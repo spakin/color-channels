@@ -100,6 +100,22 @@ func MergeLuv(imgs []*image.Gray) image.Image {
 	return merged
 }
 
+// MergeXyy merges x, y, and Y channels into a single image.
+func MergeXyy(imgs []*image.Gray) image.Image {
+	bnds := imgs[0].Bounds()
+	merged := image.NewNRGBA(bnds)
+	for r := bnds.Min.Y; r < bnds.Max.Y; r++ {
+		for c := bnds.Min.X; c < bnds.Max.X; c++ {
+			x := float64(imgs[0].GrayAt(c, r).Y) / 255.0
+			y := float64(imgs[1].GrayAt(c, r).Y) / 255.0
+			Y := float64(imgs[2].GrayAt(c, r).Y) / 255.0
+			clr := colorful.Xyy(x, y, Y).Clamped()
+			merged.Set(c, r, clr)
+		}
+	}
+	return merged
+}
+
 // WritePNG writes an arbitrary image to a named PNG file.  If the file is "",
 // write to standard output.
 func WritePNG(fn string, img image.Image) error {
@@ -129,7 +145,7 @@ func main() {
 	}
 	outName := flag.String("o", "", "Name of output stereogram file (default standard output)")
 	space := flag.String("space", "hcl",
-		`Color space in which to interpret the input channels ("hcl" or "lab")`)
+		`Color space in which to interpret the input channels ("hcl", "lab", "luv", or "xyy")`)
 	flag.Parse()
 	if flag.NArg() < 3 {
 		flag.Usage()
@@ -160,8 +176,10 @@ func main() {
 		merged = MergeLab(channels)
 	case "luv":
 		merged = MergeLuv(channels)
+	case "xyy":
+		merged = MergeXyy(channels)
 	default:
-		notify.Fatal(`--space requires an argument of either "hcl" or "lab"`)
+		notify.Fatal("Invalid argument to --space")
 	}
 	err := WritePNG(*outName, merged)
 	if err != nil {
