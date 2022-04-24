@@ -116,6 +116,22 @@ func MergeXyy(imgs []*image.Gray) image.Image {
 	return merged
 }
 
+// MergeHSL merges H, S, and L channels into a single image.
+func MergeHSL(imgs []*image.Gray) image.Image {
+	bnds := imgs[0].Bounds()
+	merged := image.NewNRGBA(bnds)
+	for y := bnds.Min.Y; y < bnds.Max.Y; y++ {
+		for x := bnds.Min.X; x < bnds.Max.X; x++ {
+			h := float64(imgs[0].GrayAt(x, y).Y) * 360.0 / 255.0
+			s := float64(imgs[1].GrayAt(x, y).Y) / 255.0
+			l := float64(imgs[2].GrayAt(x, y).Y) / 255.0
+			clr := colorful.Hsl(h, s, l).Clamped()
+			merged.Set(x, y, clr)
+		}
+	}
+	return merged
+}
+
 // MergeHSLuv merges H, S, and L channels into a single image.
 func MergeHSLuv(imgs []*image.Gray) image.Image {
 	bnds := imgs[0].Bounds()
@@ -161,7 +177,7 @@ func main() {
 	}
 	outName := flag.String("o", "", "Name of output stereogram file (default standard output)")
 	space := flag.String("space", "hcl",
-		`Color space in which to interpret the input channels ("hcl", "lab", "luv", "xyy", or "hsluv")`)
+		`Color space in which to interpret the input channels ("hcl", "lab", "luv", "xyy", "hsl", or "hsluv")`)
 	flag.Parse()
 	if flag.NArg() < 3 {
 		flag.Usage()
@@ -194,6 +210,8 @@ func main() {
 		merged = MergeLuv(channels)
 	case "xyy":
 		merged = MergeXyy(channels)
+	case "hsl":
+		merged = MergeHSL(channels)
 	case "hsluv":
 		merged = MergeHSLuv(channels)
 	default:
