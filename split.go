@@ -79,6 +79,15 @@ func SplitLab(img image.Image) []ImageInfo {
 		})
 }
 
+// SplitLuv splits a color image into separate L*, u*, and v* channels.
+func SplitLuv(img image.Image) []ImageInfo {
+	return splitAny(img, []string{"L", "u", "v"},
+		func(clr colorful.Color) []float64 {
+			l, u, v := clr.Luv()
+			return []float64{l, (u + 1.0) / 2.0, (v + 1.0) / 2.0}
+		})
+}
+
 // SplitImage splits an image into separate channel images.  It aborts on error.
 func SplitImage(p *Parameters) {
 	// Ensure we have exactly one input file.
@@ -104,6 +113,8 @@ func SplitImage(p *Parameters) {
 		outImgs = SplitHCL(inImg)
 	case "lab":
 		outImgs = SplitLab(inImg)
+	case "luv":
+		outImgs = SplitLuv(inImg)
 	default:
 		notify.Fatal("Invalid argument to --space")
 	}
