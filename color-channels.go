@@ -1,5 +1,6 @@
 /*
-merge-channels merges separately provided channels to produce a new image.
+color-channels splits an image into separate color channels and merges color
+channels into a new image.
 */
 package main
 

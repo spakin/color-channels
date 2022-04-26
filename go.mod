@@ -1,4 +1,4 @@
-module github.com/spakin/merge-channels
+module github.com/spakin/color-channels
 
 go 1.17
 
