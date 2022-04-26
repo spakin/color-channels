@@ -120,3 +120,52 @@ func MergeSRGB(imgs []*image.Gray) image.Image {
 	}
 	return merged
 }
+
+// MergeChannels merges the input files into a single output file.  It aborts
+// on error.
+func MergeChannels(p *Parameters) {
+	// Ensure we have exactly three input files.
+	if len(p.InputNames) != 3 {
+		notify.Fatalf("Expected 3 input files but saw %d", len(p.InputNames))
+	}
+
+	// Read the three color-channel images.
+	channels := make([]*image.Gray, 0, 4)
+	for _, fn := range p.InputNames {
+		g := ReadGrayscaleImage(fn)
+		channels = append(channels, g)
+	}
+
+	// Ensure that all channels have the same bounds.
+	bnds := channels[0].Bounds()
+	for _, g := range channels {
+		if g.Bounds() != bnds {
+			notify.Fatal("All input images must have the same dimensions")
+		}
+	}
+
+	// Merge the channels and write the result to a file.
+	var merged image.Image
+	switch p.ColorSpace {
+	case "hcl":
+		merged = MergeHCL(channels)
+	case "lab":
+		merged = MergeLab(channels)
+	case "luv":
+		merged = MergeLuv(channels)
+	case "xyy":
+		merged = MergeXyy(channels)
+	case "hsl":
+		merged = MergeHSL(channels)
+	case "hsluv":
+		merged = MergeHSLuv(channels)
+	case "srgb":
+		merged = MergeSRGB(channels)
+	default:
+		notify.Fatal("Invalid argument to --space")
+	}
+	err := WritePNG(p.OutputName, merged)
+	if err != nil {
+		notify.Fatal(err)
+	}
+}
