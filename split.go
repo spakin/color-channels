@@ -11,6 +11,12 @@ import (
 	"github.com/lucasb-eyer/go-colorful"
 )
 
+// A ImageInfo represents a channel name and image data.
+type ImageInfo struct {
+	Name  string      // Channel name
+	Image *image.Gray // Grayscale image representing a channel
+}
+
 // toGrayVal converts a float64 in [0.0, 1.0] to a color.Gray, clamping if
 // necessary.
 func toGrayVal(f float64) color.Gray {
@@ -23,66 +29,54 @@ func toGrayVal(f float64) color.Gray {
 	return color.Gray{Y: uint8(f * 255.0)}
 }
 
-// A ImageInfo represents a channel name and image data.
-type ImageInfo struct {
-	Name  string      // Channel name
-	Image *image.Gray // Grayscale image representing a channel
+// allocGrays allocates an array of N grayscale images of a given size.
+func allocGrays(bnds image.Rectangle, n int) []*image.Gray {
+	grays := make([]*image.Gray, n)
+	for i := range grays {
+		grays[i] = image.NewGray(bnds)
+	}
+	return grays
+}
+
+// splitAny is a helper function for the various Split* functions.  It performs
+// all the boilerplate code, invoking a color space-specific function for each
+// pixel.
+func splitAny(img image.Image, names []string,
+	fn func(colorful.Color) []float64) []ImageInfo {
+	bnds := img.Bounds()
+	grays := allocGrays(bnds, len(names))
+	for y := bnds.Min.Y; y < bnds.Max.Y; y++ {
+		for x := bnds.Min.X; x < bnds.Max.X; x++ {
+			clr, _ := colorful.MakeColor(img.At(x, y))
+			for i, f := range fn(clr) {
+				grays[i].Set(x, y, toGrayVal(f))
+			}
+		}
+	}
+	result := make([]ImageInfo, len(names))
+	for i, nm := range names {
+		result[i].Name = nm
+		result[i].Image = grays[i]
+	}
+	return result
 }
 
 // SplitHCL splits a color image into separate H, C, and L channels.
 func SplitHCL(img image.Image) []ImageInfo {
-	// Prepare the output images.
-	bnds := img.Bounds()
-	var grays [3]*image.Gray
-	grays[0] = image.NewGray(bnds)
-	grays[1] = image.NewGray(bnds)
-	grays[2] = image.NewGray(bnds)
-
-	// Convert each pixel in turn.
-	for y := bnds.Min.Y; y < bnds.Max.Y; y++ {
-		for x := bnds.Min.X; x < bnds.Max.X; x++ {
-			clr, _ := colorful.MakeColor(img.At(x, y))
+	return splitAny(img, []string{"H", "C", "L"},
+		func(clr colorful.Color) []float64 {
 			h, c, l := clr.Hcl()
-			grays[0].Set(x, y, toGrayVal(h/360.0))
-			grays[1].Set(x, y, toGrayVal(c))
-			grays[2].Set(x, y, toGrayVal(l))
-		}
-	}
-
-	// Return the color channels.
-	return []ImageInfo{
-		{Name: "H", Image: grays[0]},
-		{Name: "C", Image: grays[1]},
-		{Name: "L", Image: grays[2]},
-	}
+			return []float64{h / 360.0, c, l}
+		})
 }
 
 // SplitLab splits a color image into separate L*, a*, and b* channels.
 func SplitLab(img image.Image) []ImageInfo {
-	// Prepare the output images.
-	bnds := img.Bounds()
-	var grays [3]*image.Gray
-	grays[0] = image.NewGray(bnds)
-	grays[1] = image.NewGray(bnds)
-	grays[2] = image.NewGray(bnds)
-
-	// Convert each pixel in turn.
-	for y := bnds.Min.Y; y < bnds.Max.Y; y++ {
-		for x := bnds.Min.X; x < bnds.Max.X; x++ {
-			clr, _ := colorful.MakeColor(img.At(x, y))
+	return splitAny(img, []string{"L", "a", "b"},
+		func(clr colorful.Color) []float64 {
 			l, a, b := clr.Lab()
-			grays[0].Set(x, y, toGrayVal(l))
-			grays[1].Set(x, y, toGrayVal((a+1.0)/2.0))
-			grays[2].Set(x, y, toGrayVal((b+1.0)/2.0))
-		}
-	}
-
-	// Return the color channels.
-	return []ImageInfo{
-		{Name: "L", Image: grays[0]},
-		{Name: "a", Image: grays[1]},
-		{Name: "b", Image: grays[2]},
-	}
+			return []float64{l, (a + 1.0) / 2.0, (b + 1.0) / 2.0}
+		})
 }
 
 // SplitImage splits an image into separate channel images.  It aborts on error.
