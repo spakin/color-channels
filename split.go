@@ -57,6 +57,34 @@ func SplitHCL(img image.Image) []ImageInfo {
 	}
 }
 
+// SplitLab splits a color image into separate L*, a*, and b* channels.
+func SplitLab(img image.Image) []ImageInfo {
+	// Prepare the output images.
+	bnds := img.Bounds()
+	var grays [3]*image.Gray
+	grays[0] = image.NewGray(bnds)
+	grays[1] = image.NewGray(bnds)
+	grays[2] = image.NewGray(bnds)
+
+	// Convert each pixel in turn.
+	for y := bnds.Min.Y; y < bnds.Max.Y; y++ {
+		for x := bnds.Min.X; x < bnds.Max.X; x++ {
+			clr, _ := colorful.MakeColor(img.At(x, y))
+			l, a, b := clr.Lab()
+			grays[0].Set(x, y, toGrayVal(l))
+			grays[1].Set(x, y, toGrayVal((a+1.0)/2.0))
+			grays[2].Set(x, y, toGrayVal((b+1.0)/2.0))
+		}
+	}
+
+	// Return the color channels.
+	return []ImageInfo{
+		{Name: "L", Image: grays[0]},
+		{Name: "a", Image: grays[1]},
+		{Name: "b", Image: grays[2]},
+	}
+}
+
 // SplitImage splits an image into separate channel images.  It aborts on error.
 func SplitImage(p *Parameters) {
 	// Ensure we have exactly one input file.
@@ -80,6 +108,8 @@ func SplitImage(p *Parameters) {
 	switch p.ColorSpace {
 	case "hcl":
 		outImgs = SplitHCL(inImg)
+	case "lab":
+		outImgs = SplitLab(inImg)
 	default:
 		notify.Fatal("Invalid argument to --space")
 	}
