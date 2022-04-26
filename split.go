@@ -7,6 +7,7 @@ import (
 	"image"
 	"image/color"
 	"strings"
+	"sync"
 
 	"github.com/lucasb-eyer/go-colorful"
 )
@@ -45,14 +46,21 @@ func splitAny(img image.Image, names []string,
 	fn func(colorful.Color) []float64) []ImageInfo {
 	bnds := img.Bounds()
 	grays := allocGrays(bnds, len(names))
+	var wg sync.WaitGroup
 	for y := bnds.Min.Y; y < bnds.Max.Y; y++ {
-		for x := bnds.Min.X; x < bnds.Max.X; x++ {
-			clr, _ := colorful.MakeColor(img.At(x, y))
-			for i, f := range fn(clr) {
-				grays[i].Set(x, y, toGrayVal(f))
+		// Concurrently process all rows
+		wg.Add(1)
+		go func(y int) {
+			defer wg.Done()
+			for x := bnds.Min.X; x < bnds.Max.X; x++ {
+				clr, _ := colorful.MakeColor(img.At(x, y))
+				for i, f := range fn(clr) {
+					grays[i].Set(x, y, toGrayVal(f))
+				}
 			}
-		}
+		}(y)
 	}
+	wg.Wait()
 	result := make([]ImageInfo, len(names))
 	for i, nm := range names {
 		result[i].Name = nm
