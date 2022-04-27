@@ -59,8 +59,9 @@ func init() {
 	colorSpaceString += `, with an optional "a" suffix`
 }
 
-// cleanColorSpaceName maps a color-space name to lowercase and removes spaces
-// and asterisks.  Hence, "L*a*b*" maps to "lab", for example.
+// cleanColorSpaceName maps a color-space name to lowercase and removes
+// non-letters.  Hence, "L*a*b*" maps to "lab" and "Y'CbCr" maps to "ycbcr",
+// for example.
 func cleanColorSpaceName(cs string) string {
 	return strings.Map(func(r rune) rune {
 		if unicode.IsLetter(r) {
