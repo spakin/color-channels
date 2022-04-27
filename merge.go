@@ -166,22 +166,22 @@ func MergeChannels(p *Parameters) {
 	switch p.ColorSpace {
 	case "hcl":
 		merged = MergeHCL(channels)
-	case "lab":
-		merged = MergeLab(channels)
-	case "luv":
-		merged = MergeLuv(channels)
-	case "xyy":
-		merged = MergeXyy(channels)
 	case "hsl":
 		merged = MergeHSL(channels)
 	case "hsluv":
 		merged = MergeHSLuv(channels)
+	case "lab":
+		merged = MergeLab(channels)
 	case "linrgb":
 		merged = MergeLinRGB(channels)
+	case "luv":
+		merged = MergeLuv(channels)
 	case "rgb":
 		merged = MergeRGB(channels)
+	case "xyy":
+		merged = MergeXyy(channels)
 	default:
-		notify.Fatal("Invalid argument to --space")
+		panic("Internal error: unimplemented color space")
 	}
 	err := WritePNG(p.OutputName, merged)
 	if err != nil {

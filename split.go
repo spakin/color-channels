@@ -167,22 +167,22 @@ func SplitImage(p *Parameters) {
 	switch p.ColorSpace {
 	case "hcl":
 		outImgs = SplitHCL(inImg)
-	case "lab":
-		outImgs = SplitLab(inImg)
-	case "luv":
-		outImgs = SplitLuv(inImg)
-	case "xyy":
-		outImgs = SplitXyy(inImg)
 	case "hsl":
 		outImgs = SplitHSL(inImg)
 	case "hsluv":
 		outImgs = SplitHSLuv(inImg)
+	case "lab":
+		outImgs = SplitLab(inImg)
 	case "linrgb":
 		outImgs = SplitLinRGB(inImg)
+	case "luv":
+		outImgs = SplitLuv(inImg)
 	case "rgb":
 		outImgs = SplitRGB(inImg)
+	case "xyy":
+		outImgs = SplitXyy(inImg)
 	default:
-		notify.Fatal("Invalid argument to --space")
+		panic("Internal error: unimplemented color space")
 	}
 
 	// Write each channel to a separate grayscale file.

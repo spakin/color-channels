@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 )
 
 // notify is used to output error messages.
@@ -20,6 +21,34 @@ type Parameters struct {
 	OutputName string   // Output file names
 	ColorSpace string   // Color space name
 	Split      bool     // true: split; false: merge
+}
+
+// colorSpaceList is a list of acceptable color spaces, represented as
+// lowercase strings.
+var colorSpaceList = []string{
+	"hcl",
+	"hsl",
+	"hsluv",
+	"lab",
+	"linrgb",
+	"luv",
+	"rgb",
+	"xyy",
+}
+
+// colorSpaceString is a list of acceptable color spaces, represented as a
+// single, lowercase string with "or" before the final color-space name.
+var colorSpaceString string
+
+// init initializes colorSpaceString from colorSpaceList
+func init() {
+	quoted := make([]string, len(colorSpaceList))
+	for i, cs := range colorSpaceList {
+		quoted[i] = `"` + cs + `"`
+	}
+	ncs := len(quoted)
+	quoted[ncs-1] = "or " + quoted[ncs-1] // Assume at least 3 color spaces.
+	colorSpaceString = strings.Join(quoted, ", ")
 }
 
 // ParseCommandLine parses the command line into a Parameters struct.  It
@@ -34,7 +63,7 @@ func ParseCommandLine(p *Parameters) {
 	flag.StringVar(&p.OutputName, "o", "",
 		`Name of output file for --merge (default standard output) or output-file template containing "%s" for --split (no default)`)
 	flag.StringVar(&p.ColorSpace, "space", "rgb",
-		`Color space in which to interpret the input channels ("hcl", "hsl", "hsluv", "luv", "lab", "linrgb", "rgb", or "xyy"`)
+		"Color space in which to interpret the input channels ("+colorSpaceString+")")
 	split := flag.Bool("split", false, "Split a color image into one grayscale image per color channel")
 	merge := flag.Bool("merge", false, "Merge one grayscale image per color channel into a single color image")
 	flag.Parse()
@@ -50,6 +79,17 @@ func ParseCommandLine(p *Parameters) {
 		p.Split = false
 	case !*split && !*merge:
 		notify.Fatal("Exactly one of --split and --merge must be specified")
+	}
+	var validCS bool
+	for _, cs := range colorSpaceList {
+		if p.ColorSpace == cs {
+			validCS = true
+			break
+		}
+	}
+	if !validCS {
+		notify.Fatalf("--space requires one of %s (not %q)",
+			colorSpaceString, p.ColorSpace)
 	}
 }
 
