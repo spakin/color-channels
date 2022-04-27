@@ -144,6 +144,14 @@ func SplitRGB(img image.Image) []ImageInfo {
 		})
 }
 
+// SplitSRGB splits a color image into separate R, G, and B channels.
+func SplitSRGB(img image.Image) []ImageInfo {
+	return splitAny(img, []string{"R", "G", "B"},
+		func(clr colorful.Color) []float64 {
+			return []float64{clr.R, clr.G, clr.B}
+		})
+}
+
 // SplitImage splits an image into separate channel images.  It aborts on error.
 func SplitImage(p *Parameters) {
 	// Ensure we have exactly one input file.
@@ -179,6 +187,8 @@ func SplitImage(p *Parameters) {
 		outImgs = SplitLuv(inImg)
 	case "rgb":
 		outImgs = SplitRGB(inImg)
+	case "srgb":
+		outImgs = SplitSRGB(inImg)
 	case "xyy":
 		outImgs = SplitXyy(inImg)
 	default:

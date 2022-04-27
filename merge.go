@@ -138,6 +138,22 @@ func MergeRGB(imgs []*image.Gray) image.Image {
 	return merged
 }
 
+// MergeSRGB merges R, G, and B channels into a single image.
+func MergeSRGB(imgs []*image.Gray) image.Image {
+	bnds := imgs[0].Bounds()
+	merged := image.NewNRGBA(bnds)
+	for y := bnds.Min.Y; y < bnds.Max.Y; y++ {
+		for x := bnds.Min.X; x < bnds.Max.X; x++ {
+			r := float64(imgs[0].GrayAt(x, y).Y) / 255.0
+			g := float64(imgs[1].GrayAt(x, y).Y) / 255.0
+			b := float64(imgs[2].GrayAt(x, y).Y) / 255.0
+			clr := colorful.Color{R: r, G: g, B: b}
+			merged.Set(x, y, clr)
+		}
+	}
+	return merged
+}
+
 // MergeChannels merges the input files into a single output file.  It aborts
 // on error.
 func MergeChannels(p *Parameters) {
@@ -178,6 +194,8 @@ func MergeChannels(p *Parameters) {
 		merged = MergeLuv(channels)
 	case "rgb":
 		merged = MergeRGB(channels)
+	case "srgb":
+		merged = MergeSRGB(channels)
 	case "xyy":
 		merged = MergeXyy(channels)
 	default:
