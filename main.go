@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"unicode"
 )
 
 // notify is used to output error messages.
@@ -52,6 +53,14 @@ func init() {
 	colorSpaceString = strings.Join(quoted, ", ")
 }
 
+// cleanColorSpaceName maps a color-space name to lowercase and removes spaces
+// and asterisks.  Hence, "L*a*b*" maps to "lab", for example.
+func cleanColorSpaceName(cs string) string {
+	return strings.TrimFunc(strings.ToLower(cs), func(r rune) bool {
+		return !unicode.IsLetter(r) && r != '*'
+	})
+}
+
 // ParseCommandLine parses the command line into a Parameters struct.  It
 // aborts on error.
 func ParseCommandLine(p *Parameters) {
@@ -81,6 +90,7 @@ func ParseCommandLine(p *Parameters) {
 	case !*split && !*merge:
 		notify.Fatal("Exactly one of --split and --merge must be specified")
 	}
+	p.ColorSpace = cleanColorSpaceName(p.ColorSpace)
 	var validCS bool
 	for _, cs := range colorSpaceList {
 		if p.ColorSpace == cs {
