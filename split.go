@@ -144,6 +144,14 @@ func SplitRGB(img image.Image) []ImageInfo {
 		})
 }
 
+// SplitSRGB splits a color image into separate R, G, and B channels.
+func SplitSRGB(img image.Image) []ImageInfo {
+	return splitAny(img, []string{"R", "G", "B"},
+		func(clr colorful.Color) []float64 {
+			return []float64{clr.R, clr.G, clr.B}
+		})
+}
+
 // SplitCMYK splits a color image into separate C, M, Y, and K channels.
 func SplitCMYK(img image.Image) []ImageInfo {
 	return splitAny(img, []string{"C", "M", "Y", "K"},
@@ -158,11 +166,16 @@ func SplitCMYK(img image.Image) []ImageInfo {
 		})
 }
 
-// SplitSRGB splits a color image into separate R, G, and B channels.
-func SplitSRGB(img image.Image) []ImageInfo {
-	return splitAny(img, []string{"R", "G", "B"},
+// SplitYCbCr splits a color image into separate Y, Cb, and Cr channels.
+func SplitYCbCr(img image.Image) []ImageInfo {
+	return splitAny(img, []string{"Y", "Cb", "Cr"},
 		func(clr colorful.Color) []float64 {
-			return []float64{clr.R, clr.G, clr.B}
+			ri, gi, bi := clr.RGB255()
+			yi, cbi, cri := color.RGBToYCbCr(ri, gi, bi)
+			l := float64(yi) / 255.0 // y is already taken.
+			cb := float64(cbi) / 255.0
+			cr := float64(cri) / 255.0
+			return []float64{l, cb, cr}
 		})
 }
 
@@ -207,6 +220,8 @@ func SplitImage(p *Parameters) {
 		outImgs = SplitSRGB(inImg)
 	case "xyy":
 		outImgs = SplitXyy(inImg)
+	case "ycbcr":
+		outImgs = SplitYCbCr(inImg)
 	default:
 		panic("Internal error: unimplemented color space")
 	}

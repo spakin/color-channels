@@ -172,6 +172,23 @@ func MergeCMYK(imgs []*image.Gray) image.Image {
 	return merged
 }
 
+// MergeYCbCr merges Y, Cb, and Cr channels into a single image.
+func MergeYCbCr(imgs []*image.Gray) image.Image {
+	bnds := imgs[0].Bounds()
+	merged := image.NewNRGBA(bnds)
+	for y := bnds.Min.Y; y < bnds.Max.Y; y++ {
+		for x := bnds.Min.X; x < bnds.Max.X; x++ {
+			l := imgs[0].GrayAt(x, y).Y // y is already taken.
+			cb := imgs[1].GrayAt(x, y).Y
+			cr := imgs[2].GrayAt(x, y).Y
+			r, g, b := color.YCbCrToRGB(l, cb, cr)
+			clr := color.NRGBA{r, g, b, 255}
+			merged.Set(x, y, clr)
+		}
+	}
+	return merged
+}
+
 // MergeChannels merges the input files into a single output file.  It aborts
 // on error.
 func MergeChannels(p *Parameters) {
@@ -227,6 +244,8 @@ func MergeChannels(p *Parameters) {
 		merged = MergeSRGB(channels)
 	case "xyy":
 		merged = MergeXyy(channels)
+	case "ycbcr":
+		merged = MergeYCbCr(channels)
 	default:
 		panic("Internal error: unimplemented color space")
 	}

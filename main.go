@@ -37,6 +37,7 @@ var colorSpaceList = []string{
 	"rgb",
 	"srgb",
 	"xyy",
+	"ycbcr",
 }
 
 // colorSpaceString is a list of acceptable color spaces, represented as a
