@@ -144,6 +144,20 @@ func SplitRGB(img image.Image) []ImageInfo {
 		})
 }
 
+// SplitCMYK splits a color image into separate C, M, Y, and K channels.
+func SplitCMYK(img image.Image) []ImageInfo {
+	return splitAny(img, []string{"C", "M", "Y", "K"},
+		func(clr colorful.Color) []float64 {
+			ri, gi, bi := clr.RGB255()
+			ci, mi, yi, ki := color.RGBToCMYK(ri, gi, bi)
+			c := float64(ci) / 255.0
+			m := float64(mi) / 255.0
+			y := float64(yi) / 255.0
+			k := float64(ki) / 255.0
+			return []float64{c, m, y, k}
+		})
+}
+
 // SplitSRGB splits a color image into separate R, G, and B channels.
 func SplitSRGB(img image.Image) []ImageInfo {
 	return splitAny(img, []string{"R", "G", "B"},
@@ -173,6 +187,8 @@ func SplitImage(p *Parameters) {
 	// Split the input image into multiple grayscale images.
 	var outImgs []ImageInfo
 	switch p.ColorSpace {
+	case "cmyk":
+		outImgs = SplitCMYK(inImg)
 	case "hcl":
 		outImgs = SplitHCL(inImg)
 	case "hsl":

@@ -154,15 +154,42 @@ func MergeSRGB(imgs []*image.Gray) image.Image {
 	return merged
 }
 
+// MergeCMYK merges C, M, Y, and K channels into a single image.
+func MergeCMYK(imgs []*image.Gray) image.Image {
+	bnds := imgs[0].Bounds()
+	merged := image.NewNRGBA(bnds)
+	for y := bnds.Min.Y; y < bnds.Max.Y; y++ {
+		for x := bnds.Min.X; x < bnds.Max.X; x++ {
+			c := imgs[0].GrayAt(x, y).Y
+			m := imgs[1].GrayAt(x, y).Y
+			w := imgs[2].GrayAt(x, y).Y // y is already taken.
+			k := imgs[3].GrayAt(x, y).Y
+			r, g, b := color.CMYKToRGB(c, m, w, k)
+			clr := color.NRGBA{r, g, b, 255}
+			merged.Set(x, y, clr)
+		}
+	}
+	return merged
+}
+
 // MergeChannels merges the input files into a single output file.  It aborts
 // on error.
 func MergeChannels(p *Parameters) {
-	// Ensure we have exactly three input files.
-	if len(p.InputNames) != 3 {
-		notify.Fatalf("Expected 3 input files but saw %d", len(p.InputNames))
+	// Ensure we have the correct number of input files.
+	nIn := len(p.InputNames)
+	wrongArgsFmt := "Expected %d input files for --space=%q but saw %d"
+	switch p.ColorSpace {
+	case "cmyk":
+		if nIn != 4 {
+			notify.Fatalf(wrongArgsFmt, 4, p.ColorSpace, nIn)
+		}
+	default:
+		if nIn != 3 {
+			notify.Fatalf(wrongArgsFmt, 3, p.ColorSpace, nIn)
+		}
 	}
 
-	// Read the three color-channel images.
+	// Read the all color-channel images.
 	channels := make([]*image.Gray, 0, 4)
 	for _, fn := range p.InputNames {
 		g := ReadGrayscaleImage(fn)
@@ -180,6 +207,8 @@ func MergeChannels(p *Parameters) {
 	// Merge the channels and write the result to a file.
 	var merged image.Image
 	switch p.ColorSpace {
+	case "cmyk":
+		merged = MergeCMYK(channels)
 	case "hcl":
 		merged = MergeHCL(channels)
 	case "hsl":

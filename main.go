@@ -27,6 +27,7 @@ type Parameters struct {
 // colorSpaceList is a list of acceptable color spaces, represented as
 // lowercase strings.
 var colorSpaceList = []string{
+	"cmyk",
 	"hcl",
 	"hsl",
 	"hsluv",
