@@ -31,8 +31,8 @@ func ParseCommandLine(p *Parameters) {
 		flag.PrintDefaults()
 	}
 	flag.StringVar(&p.OutputName, "o", "", "Name of output file (default standard output)")
-	flag.StringVar(&p.ColorSpace, "space", "hcl",
-		`Color space in which to interpret the input channels ("hcl", "hsl", "hsluv", "luv", "lab", "srgb", or "xyy"`)
+	flag.StringVar(&p.ColorSpace, "space", "rgb",
+		`Color space in which to interpret the input channels ("hcl", "hsl", "hsluv", "luv", "lab", "linrgb", "rgb", or "xyy"`)
 	flag.BoolVar(&p.Split, "split", false, "Split a single image into one grayscale image per color channel")
 	flag.Parse()
 	p.InputNames = flag.Args()

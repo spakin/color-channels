@@ -5,6 +5,7 @@ package main
 
 import (
 	"image"
+	"image/color"
 
 	"github.com/lucasb-eyer/go-colorful"
 )
@@ -105,8 +106,8 @@ func MergeHSLuv(imgs []*image.Gray) image.Image {
 	return merged
 }
 
-// MergeSRGB merges R, G, and B channels into a single image.
-func MergeSRGB(imgs []*image.Gray) image.Image {
+// MergeLinRGB merges R, G, and B channels into a single image.
+func MergeLinRGB(imgs []*image.Gray) image.Image {
 	bnds := imgs[0].Bounds()
 	merged := image.NewNRGBA(bnds)
 	for y := bnds.Min.Y; y < bnds.Max.Y; y++ {
@@ -115,6 +116,22 @@ func MergeSRGB(imgs []*image.Gray) image.Image {
 			g := float64(imgs[1].GrayAt(x, y).Y) / 255.0
 			b := float64(imgs[2].GrayAt(x, y).Y) / 255.0
 			clr := colorful.LinearRgb(r, g, b).Clamped()
+			merged.Set(x, y, clr)
+		}
+	}
+	return merged
+}
+
+// MergeRGB merges R, G, and B channels into a single image.
+func MergeRGB(imgs []*image.Gray) image.Image {
+	bnds := imgs[0].Bounds()
+	merged := image.NewNRGBA(bnds)
+	for y := bnds.Min.Y; y < bnds.Max.Y; y++ {
+		for x := bnds.Min.X; x < bnds.Max.X; x++ {
+			r := imgs[0].GrayAt(x, y).Y
+			g := imgs[1].GrayAt(x, y).Y
+			b := imgs[2].GrayAt(x, y).Y
+			clr := color.NRGBA{r, g, b, 255}
 			merged.Set(x, y, clr)
 		}
 	}
@@ -159,8 +176,10 @@ func MergeChannels(p *Parameters) {
 		merged = MergeHSL(channels)
 	case "hsluv":
 		merged = MergeHSLuv(channels)
-	case "srgb":
-		merged = MergeSRGB(channels)
+	case "linrgb":
+		merged = MergeLinRGB(channels)
+	case "rgb":
+		merged = MergeRGB(channels)
 	default:
 		notify.Fatal("Invalid argument to --space")
 	}
