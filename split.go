@@ -114,6 +114,24 @@ func SplitHSL(img image.Image) []ImageInfo {
 		})
 }
 
+// SplitHSLuv splits a color image into separate H, S, and L channels.
+func SplitHSLuv(img image.Image) []ImageInfo {
+	return splitAny(img, []string{"H", "S", "L"},
+		func(clr colorful.Color) []float64 {
+			h, s, l := clr.HSLuv()
+			return []float64{h / 360.0, s, l}
+		})
+}
+
+// SplitSRGB splits a color image into separate R, G, and B channels.
+func SplitSRGB(img image.Image) []ImageInfo {
+	return splitAny(img, []string{"R", "G", "B"},
+		func(clr colorful.Color) []float64 {
+			r, g, b := clr.LinearRgb()
+			return []float64{r, g, b}
+		})
+}
+
 // SplitImage splits an image into separate channel images.  It aborts on error.
 func SplitImage(p *Parameters) {
 	// Ensure we have exactly one input file.
@@ -145,6 +163,10 @@ func SplitImage(p *Parameters) {
 		outImgs = SplitXyy(inImg)
 	case "hsl":
 		outImgs = SplitHSL(inImg)
+	case "hsluv":
+		outImgs = SplitHSLuv(inImg)
+	case "srgb":
+		outImgs = SplitSRGB(inImg)
 	default:
 		notify.Fatal("Invalid argument to --space")
 	}
