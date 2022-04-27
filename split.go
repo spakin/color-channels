@@ -179,6 +179,23 @@ func SplitYCbCr(img image.Image) []ImageInfo {
 		})
 }
 
+// ExtractAlpha extracts an image's alpha channel and returns it as an
+// ImageInfo.
+func ExtractAlpha(img image.Image) ImageInfo {
+	bnds := img.Bounds()
+	gray := image.NewGray(bnds)
+	for y := bnds.Min.Y; y < bnds.Max.Y; y++ {
+		for x := bnds.Min.X; x < bnds.Max.X; x++ {
+			clr := color.NRGBAModel.Convert(img.At(x, y)).(color.NRGBA)
+			gray.SetGray(x, y, color.Gray{Y: clr.A})
+		}
+	}
+	return ImageInfo{
+		Name:  "alpha",
+		Image: gray,
+	}
+}
+
 // SplitImage splits an image into separate channel images.  It aborts on error.
 func SplitImage(p *Parameters) {
 	// Ensure we have exactly one input file.
@@ -224,6 +241,11 @@ func SplitImage(p *Parameters) {
 		outImgs = SplitYCbCr(inImg)
 	default:
 		panic("Internal error: unimplemented color space")
+	}
+
+	// Optionally include an alpha channel.
+	if p.Alpha {
+		outImgs = append(outImgs, ExtractAlpha(inImg))
 	}
 
 	// Write each channel to a separate grayscale file.

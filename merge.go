@@ -189,24 +189,44 @@ func MergeYCbCr(imgs []*image.Gray) image.Image {
 	return merged
 }
 
+// AddAlpha replaces an image's alpha channel with a separately specified alpha
+// channel.
+func AddAlpha(img image.Image, alpha *image.Gray) image.Image {
+	bnds := img.Bounds()
+	newImg := image.NewNRGBA(bnds)
+	for y := bnds.Min.Y; y < bnds.Max.Y; y++ {
+		for x := bnds.Min.X; x < bnds.Max.X; x++ {
+			clr := img.At(x, y)
+			nrgba := color.NRGBAModel.Convert(clr).(color.NRGBA)
+			nrgba.A = alpha.GrayAt(x, y).Y
+			newImg.Set(x, y, nrgba)
+		}
+	}
+	return newImg
+}
+
 // MergeChannels merges the input files into a single output file.  It aborts
 // on error.
 func MergeChannels(p *Parameters) {
 	// Ensure we have the correct number of input files.
 	nIn := len(p.InputNames)
 	wrongArgsFmt := "Expected %d input files for --space=%q but saw %d"
+	numAlpha := 0
+	if p.Alpha {
+		numAlpha = 1
+	}
 	switch p.ColorSpace {
 	case "cmyk":
-		if nIn != 4 {
-			notify.Fatalf(wrongArgsFmt, 4, p.ColorSpace, nIn)
+		if nIn != 4+numAlpha {
+			notify.Fatalf(wrongArgsFmt, 4+numAlpha, p.OrigColorSpace, nIn)
 		}
 	default:
-		if nIn != 3 {
-			notify.Fatalf(wrongArgsFmt, 3, p.ColorSpace, nIn)
+		if nIn != 3+numAlpha {
+			notify.Fatalf(wrongArgsFmt, 3+numAlpha, p.OrigColorSpace, nIn)
 		}
 	}
 
-	// Read the all color-channel images.
+	// Read all the color-channel images.
 	channels := make([]*image.Gray, 0, 4)
 	for _, fn := range p.InputNames {
 		g := ReadGrayscaleImage(fn)
@@ -221,7 +241,7 @@ func MergeChannels(p *Parameters) {
 		}
 	}
 
-	// Merge the channels and write the result to a file.
+	// Merge the channels.
 	var merged image.Image
 	switch p.ColorSpace {
 	case "cmyk":
@@ -249,6 +269,13 @@ func MergeChannels(p *Parameters) {
 	default:
 		panic("Internal error: unimplemented color space")
 	}
+
+	// If an alpha channel was included, insert it into the image.
+	if p.Alpha {
+		merged = AddAlpha(merged, channels[len(channels)-1])
+	}
+
+	// Write the result to a file.
 	err := WritePNG(p.OutputName, merged)
 	if err != nil {
 		notify.Fatal(err)

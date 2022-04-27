@@ -18,10 +18,12 @@ var notify *log.Logger
 
 // Parameters encapsulates all program parameters.
 type Parameters struct {
-	InputNames []string // Input file names
-	OutputName string   // Output file names
-	ColorSpace string   // Color space name
-	Split      bool     // true: split; false: merge
+	InputNames     []string // Input file names
+	OutputName     string   // Output file names
+	OrigColorSpace string   // Color-space name as written by the user
+	ColorSpace     string   // Color-space name
+	Split          bool     // true: split; false: merge
+	Alpha          bool     // true: split/merge an alpha layer: false: don't
 }
 
 // colorSpaceList is a list of acceptable color spaces, represented as
@@ -53,14 +55,18 @@ func init() {
 	ncs := len(quoted)
 	quoted[ncs-1] = "or " + quoted[ncs-1] // Assume at least 3 color spaces.
 	colorSpaceString = strings.Join(quoted, ", ")
+	colorSpaceString += `, with an optional "a" suffix`
 }
 
 // cleanColorSpaceName maps a color-space name to lowercase and removes spaces
 // and asterisks.  Hence, "L*a*b*" maps to "lab", for example.
 func cleanColorSpaceName(cs string) string {
-	return strings.TrimFunc(strings.ToLower(cs), func(r rune) bool {
-		return !unicode.IsLetter(r) && r != '*'
-	})
+	return strings.Map(func(r rune) rune {
+		if unicode.IsLetter(r) {
+			return unicode.ToLower(r)
+		}
+		return -1
+	}, cs)
 }
 
 // ParseCommandLine parses the command line into a Parameters struct.  It
@@ -74,14 +80,14 @@ func ParseCommandLine(p *Parameters) {
 	}
 	flag.StringVar(&p.OutputName, "o", "",
 		`Name of output file for --merge (default standard output) or output-file template containing "%s" for --split (no default)`)
-	flag.StringVar(&p.ColorSpace, "space", "rgb",
+	flag.StringVar(&p.OrigColorSpace, "space", "rgb",
 		"Color space in which to interpret the input channels ("+colorSpaceString+")")
 	split := flag.Bool("split", false, "Split a color image into one grayscale image per color channel")
 	merge := flag.Bool("merge", false, "Merge one grayscale image per color channel into a single color image")
 	flag.Parse()
 	p.InputNames = flag.Args()
 
-	// Validate the given arguments.
+	// Validate the use of the --split and --merge arguments.
 	switch {
 	case *split && *merge:
 		notify.Fatal("--split and --merge are mutually exclusive")
@@ -92,7 +98,10 @@ func ParseCommandLine(p *Parameters) {
 	case !*split && !*merge:
 		notify.Fatal("Exactly one of --split and --merge must be specified")
 	}
-	p.ColorSpace = cleanColorSpaceName(p.ColorSpace)
+
+	// Ensure a valid color space was designated.  Determine if an alpha
+	// channel should be used.
+	p.ColorSpace = cleanColorSpaceName(p.OrigColorSpace)
 	var validCS bool
 	for _, cs := range colorSpaceList {
 		if p.ColorSpace == cs {
@@ -100,9 +109,21 @@ func ParseCommandLine(p *Parameters) {
 			break
 		}
 	}
+	if !validCS && len(p.ColorSpace) >= 1 && p.ColorSpace[len(p.ColorSpace)-1] == 'a' {
+		// Second chance: Look for an alpha channel.
+		opaque := p.ColorSpace[:len(p.ColorSpace)-1]
+		for _, cs := range colorSpaceList {
+			if opaque == cs {
+				validCS = true
+				p.ColorSpace = opaque
+				p.Alpha = true
+				break
+			}
+		}
+	}
 	if !validCS {
 		notify.Fatalf("--space requires one of %s (not %q)",
-			colorSpaceString, p.ColorSpace)
+			colorSpaceString, p.OrigColorSpace)
 	}
 }
 
