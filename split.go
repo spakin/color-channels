@@ -96,9 +96,11 @@ func SplitLuv(img image.Image) []ImageInfo {
 		})
 }
 
-// SplitXyy splits a color image into separate x, y, and Y channels.
+// SplitXyy splits a color image into separate x, y, and Y channels.  The name
+// of the output file for the Y channel replaces "%s" with "YY" rather than "Y"
+// in case the filesystem is case-insensitive.
 func SplitXyy(img image.Image) []ImageInfo {
-	return splitAny(img, []string{"x", "y", "Y"},
+	return splitAny(img, []string{"x", "y", "YY"},
 		func(clr colorful.Color) []float64 {
 			x, y, Y := clr.Xyy()
 			return []float64{x, y, Y}
