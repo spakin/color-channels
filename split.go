@@ -172,10 +172,19 @@ func SplitYCbCr(img image.Image) []ImageInfo {
 		func(clr colorful.Color) []float64 {
 			ri, gi, bi := clr.RGB255()
 			yi, cbi, cri := color.RGBToYCbCr(ri, gi, bi)
-			l := float64(yi) / 255.0 // y is already taken.
+			y := float64(yi) / 255.0
 			cb := float64(cbi) / 255.0
 			cr := float64(cri) / 255.0
-			return []float64{l, cb, cr}
+			return []float64{y, cb, cr}
+		})
+}
+
+// SplitXYZ splits a color image into separate X, Y, and Z channels.
+func SplitXYZ(img image.Image) []ImageInfo {
+	return splitAny(img, []string{"X", "Y", "Z"},
+		func(clr colorful.Color) []float64 {
+			x, y, z := clr.Xyz()
+			return []float64{x, y, z}
 		})
 }
 
@@ -237,6 +246,8 @@ func SplitImage(p *Parameters) {
 		outImgs = SplitSRGB(inImg)
 	case "xyy":
 		outImgs = SplitXyy(inImg)
+	case "xyz":
+		outImgs = SplitXYZ(inImg)
 	case "ycbcr":
 		outImgs = SplitYCbCr(inImg)
 	default:

@@ -205,6 +205,22 @@ func AddAlpha(img image.Image, alpha *image.Gray) image.Image {
 	return newImg
 }
 
+// MergeXYZ merges X, Y, and Z channels into a single image.
+func MergeXYZ(imgs []*image.Gray) image.Image {
+	bnds := imgs[0].Bounds()
+	merged := image.NewNRGBA(bnds)
+	for r := bnds.Min.Y; r < bnds.Max.Y; r++ {
+		for c := bnds.Min.X; c < bnds.Max.X; c++ {
+			x := float64(imgs[0].GrayAt(c, r).Y) / 255.0
+			y := float64(imgs[1].GrayAt(c, r).Y) / 255.0
+			z := float64(imgs[2].GrayAt(c, r).Y) / 255.0
+			clr := colorful.Xyz(x, y, z).Clamped()
+			merged.Set(c, r, clr)
+		}
+	}
+	return merged
+}
+
 // MergeChannels merges the input files into a single output file.  It aborts
 // on error.
 func MergeChannels(p *Parameters) {
@@ -264,6 +280,8 @@ func MergeChannels(p *Parameters) {
 		merged = MergeSRGB(channels)
 	case "xyy":
 		merged = MergeXyy(channels)
+	case "xyz":
+		merged = MergeXYZ(channels)
 	case "ycbcr":
 		merged = MergeYCbCr(channels)
 	default:

@@ -39,6 +39,7 @@ var colorSpaceList = []string{
 	"rgb",
 	"srgb",
 	"xyy",
+	"xyz",
 	"ycbcr",
 }
 
