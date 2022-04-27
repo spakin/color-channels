@@ -25,17 +25,32 @@ type Parameters struct {
 // ParseCommandLine parses the command line into a Parameters struct.  It
 // aborts on error.
 func ParseCommandLine(p *Parameters) {
+	// Parse the command line.
 	flag.Usage = func() {
-		fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s [options] <image-file>...\n", os.Args[0])
+		fmt.Fprintf(flag.CommandLine.Output(), "Usage: %s [--merge | --split] [other_options] <image-file>...\n", os.Args[0])
 		fmt.Fprint(flag.CommandLine.Output(), "Options:\n\n")
 		flag.PrintDefaults()
 	}
-	flag.StringVar(&p.OutputName, "o", "", "Name of output file (default standard output)")
+	flag.StringVar(&p.OutputName, "o", "",
+		`Name of output file for --merge (default standard output) or output-file template containing "%s" for --split (no default)`)
 	flag.StringVar(&p.ColorSpace, "space", "rgb",
 		`Color space in which to interpret the input channels ("hcl", "hsl", "hsluv", "luv", "lab", "linrgb", "rgb", or "xyy"`)
-	flag.BoolVar(&p.Split, "split", false, "Split a single image into one grayscale image per color channel")
+	split := flag.Bool("split", false, "Split a color image into one grayscale image per color channel")
+	merge := flag.Bool("merge", false, "Merge one grayscale image per color channel into a single color image")
 	flag.Parse()
 	p.InputNames = flag.Args()
+
+	// Validate the given arguments.
+	switch {
+	case *split && *merge:
+		notify.Fatal("--split and --merge are mutually exclusive")
+	case *split:
+		p.Split = true
+	case *merge:
+		p.Split = false
+	case !*split && !*merge:
+		notify.Fatal("Exactly one of --split and --merge must be specified")
+	}
 }
 
 func main() {
