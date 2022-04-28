@@ -11,7 +11,7 @@ import (
 )
 
 // MergeHCL merges H, C, and L channels into a single image.
-func MergeHCL(imgs []*image.Gray) image.Image {
+func MergeHCL(imgs []*image.Gray, wref [3]float64) image.Image {
 	bnds := imgs[0].Bounds()
 	merged := image.NewNRGBA(bnds)
 	for y := bnds.Min.Y; y < bnds.Max.Y; y++ {
@@ -19,7 +19,7 @@ func MergeHCL(imgs []*image.Gray) image.Image {
 			h := float64(imgs[0].GrayAt(x, y).Y) * 360.0 / 255.0
 			c := float64(imgs[1].GrayAt(x, y).Y) / 255.0
 			l := float64(imgs[2].GrayAt(x, y).Y) / 255.0
-			clr := colorful.Hcl(h, c, l).Clamped()
+			clr := colorful.HclWhiteRef(h, c, l, wref).Clamped()
 			merged.Set(x, y, clr)
 		}
 	}
@@ -27,7 +27,7 @@ func MergeHCL(imgs []*image.Gray) image.Image {
 }
 
 // MergeLab merges L*, a*, and b* channels into a single image.
-func MergeLab(imgs []*image.Gray) image.Image {
+func MergeLab(imgs []*image.Gray, wref [3]float64) image.Image {
 	bnds := imgs[0].Bounds()
 	merged := image.NewNRGBA(bnds)
 	for y := bnds.Min.Y; y < bnds.Max.Y; y++ {
@@ -35,7 +35,7 @@ func MergeLab(imgs []*image.Gray) image.Image {
 			L := float64(imgs[0].GrayAt(x, y).Y) / 255.0
 			a := float64(imgs[1].GrayAt(x, y).Y)*2.0/255.0 - 1.0
 			b := float64(imgs[2].GrayAt(x, y).Y)*2.0/255.0 - 1.0
-			clr := colorful.Lab(L, a, b).Clamped()
+			clr := colorful.LabWhiteRef(L, a, b, wref).Clamped()
 			merged.Set(x, y, clr)
 		}
 	}
@@ -43,7 +43,7 @@ func MergeLab(imgs []*image.Gray) image.Image {
 }
 
 // MergeLuv merges L*, u*, and v* channels into a single image.
-func MergeLuv(imgs []*image.Gray) image.Image {
+func MergeLuv(imgs []*image.Gray, wref [3]float64) image.Image {
 	bnds := imgs[0].Bounds()
 	merged := image.NewNRGBA(bnds)
 	for y := bnds.Min.Y; y < bnds.Max.Y; y++ {
@@ -51,7 +51,7 @@ func MergeLuv(imgs []*image.Gray) image.Image {
 			L := float64(imgs[0].GrayAt(x, y).Y) / 255.0
 			u := float64(imgs[1].GrayAt(x, y).Y)*2.0/255.0 - 1.0
 			v := float64(imgs[2].GrayAt(x, y).Y)*2.0/255.0 - 1.0
-			clr := colorful.Luv(L, u, v).Clamped()
+			clr := colorful.LuvWhiteRef(L, u, v, wref).Clamped()
 			merged.Set(x, y, clr)
 		}
 	}
@@ -263,17 +263,17 @@ func MergeChannels(p *Parameters) {
 	case "cmyk":
 		merged = MergeCMYK(channels)
 	case "hcl":
-		merged = MergeHCL(channels)
+		merged = MergeHCL(channels, p.WhitePoint)
 	case "hsl":
 		merged = MergeHSL(channels)
 	case "hsluv":
 		merged = MergeHSLuv(channels)
 	case "lab":
-		merged = MergeLab(channels)
+		merged = MergeLab(channels, p.WhitePoint)
 	case "linrgb":
 		merged = MergeLinRGB(channels)
 	case "luv":
-		merged = MergeLuv(channels)
+		merged = MergeLuv(channels, p.WhitePoint)
 	case "rgb":
 		merged = MergeRGB(channels)
 	case "srgb":

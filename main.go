@@ -9,8 +9,11 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 	"unicode"
+
+	"github.com/lucasb-eyer/go-colorful"
 )
 
 // notify is used to output error messages.
@@ -18,12 +21,13 @@ var notify *log.Logger
 
 // Parameters encapsulates all program parameters.
 type Parameters struct {
-	InputNames     []string // Input file names
-	OutputName     string   // Output file names
-	OrigColorSpace string   // Color-space name as written by the user
-	ColorSpace     string   // Color-space name
-	Split          bool     // true: split; false: merge
-	Alpha          bool     // true: split/merge an alpha layer: false: don't
+	InputNames     []string   // Input file names
+	OutputName     string     // Output file names
+	OrigColorSpace string     // Color-space name as written by the user
+	ColorSpace     string     // Color-space name
+	Split          bool       // true: split; false: merge
+	Alpha          bool       // true: split/merge an alpha layer: false: don't
+	WhitePoint     [3]float64 // White reference point as an XYZ color
 }
 
 // colorSpaceList is a list of acceptable color spaces, represented as
@@ -71,6 +75,50 @@ func cleanColorSpaceName(cs string) string {
 	}, cs)
 }
 
+// parseWhitePoint parses a pair of CIE chromaticity coordinates into an XYZ
+// color.  It aborts on error.
+func parseWhitePoint(s string) [3]float64 {
+	// Handle the cases go-colorful supports.
+	wp := strings.ToUpper(strings.TrimSpace(s))
+	if wp == "D65" {
+		return colorful.D65
+	}
+	if wp == "D50" {
+		return colorful.D50
+	}
+
+	// Parse the strings into a pair of floating-point numbers.
+	toks := strings.FieldsFunc(wp, func(c rune) bool {
+		if unicode.IsDigit(c) {
+			return false
+		}
+		switch c {
+		case '+', '-', 'E', '.':
+			return false
+		default:
+			return true
+		}
+	})
+	if len(toks) != 2 {
+		notify.Fatalf(`Failed to parse %q as either "D65", "D50", or a pair of floating-point numbers`, s)
+	}
+	x, err := strconv.ParseFloat(toks[0], 64)
+	if err != nil || x < 0.0 || x > 1.0 {
+		notify.Fatalf("Failed to parse %q as a floating-point number in [0.0, 1.0]", toks[0])
+	}
+	y, err := strconv.ParseFloat(toks[1], 64)
+	if err != nil || y <= 0.0 || y > 1.0 {
+		notify.Fatalf("Failed to parse %q as a floating-point number in (0.0, 1.0]", toks[0])
+	}
+	if x+y > 1.0 {
+		notify.Fatalf("%s + %s must be less than or equal to 1.0", toks[0], toks[1])
+	}
+
+	// Convert from (x, y) to XYZ.
+	z := 1.0 - x - y
+	return [3]float64{x / y, 1.0, z / y}
+}
+
 // ParseCommandLine parses the command line into a Parameters struct.  It
 // aborts on error.
 func ParseCommandLine(p *Parameters) {
@@ -86,8 +134,11 @@ func ParseCommandLine(p *Parameters) {
 		"Color space in which to interpret the input channels ("+colorSpaceString+")")
 	split := flag.Bool("split", false, "Split a color image into one grayscale image per color channel")
 	merge := flag.Bool("merge", false, "Merge one grayscale image per color channel into a single color image")
+	white := flag.String("white", "D65",
+		`White-point CIE chromaticity coordinates (two numbers in [0.0, 1.0]) or "D65" or "D50", used for hcl, lab, and luv`)
 	flag.Parse()
 	p.InputNames = flag.Args()
+	p.WhitePoint = parseWhitePoint(*white)
 
 	// Validate the use of the --split and --merge arguments.
 	switch {

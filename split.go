@@ -70,28 +70,28 @@ func splitAny(img image.Image, names []string,
 }
 
 // SplitHCL splits a color image into separate H, C, and L channels.
-func SplitHCL(img image.Image) []ImageInfo {
+func SplitHCL(img image.Image, wref [3]float64) []ImageInfo {
 	return splitAny(img, []string{"H", "C", "L"},
 		func(clr colorful.Color) []float64 {
-			h, c, l := clr.Hcl()
+			h, c, l := clr.HclWhiteRef(wref)
 			return []float64{h / 360.0, c, l}
 		})
 }
 
 // SplitLab splits a color image into separate L*, a*, and b* channels.
-func SplitLab(img image.Image) []ImageInfo {
+func SplitLab(img image.Image, wref [3]float64) []ImageInfo {
 	return splitAny(img, []string{"L", "a", "b"},
 		func(clr colorful.Color) []float64 {
-			l, a, b := clr.Lab()
+			l, a, b := clr.LabWhiteRef(wref)
 			return []float64{l, (a + 1.0) / 2.0, (b + 1.0) / 2.0}
 		})
 }
 
 // SplitLuv splits a color image into separate L*, u*, and v* channels.
-func SplitLuv(img image.Image) []ImageInfo {
+func SplitLuv(img image.Image, wref [3]float64) []ImageInfo {
 	return splitAny(img, []string{"L", "u", "v"},
 		func(clr colorful.Color) []float64 {
-			l, u, v := clr.Luv()
+			l, u, v := clr.LuvWhiteRef(wref)
 			return []float64{l, (u + 1.0) / 2.0, (v + 1.0) / 2.0}
 		})
 }
@@ -231,17 +231,17 @@ func SplitImage(p *Parameters) {
 	case "cmyk":
 		outImgs = SplitCMYK(inImg)
 	case "hcl":
-		outImgs = SplitHCL(inImg)
+		outImgs = SplitHCL(inImg, p.WhitePoint)
 	case "hsl":
 		outImgs = SplitHSL(inImg)
 	case "hsluv":
 		outImgs = SplitHSLuv(inImg)
 	case "lab":
-		outImgs = SplitLab(inImg)
+		outImgs = SplitLab(inImg, p.WhitePoint)
 	case "linrgb":
 		outImgs = SplitLinRGB(inImg)
 	case "luv":
-		outImgs = SplitLuv(inImg)
+		outImgs = SplitLuv(inImg, p.WhitePoint)
 	case "rgb":
 		outImgs = SplitRGB(inImg)
 	case "srgb":
