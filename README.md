@@ -1,6 +1,7 @@
 Color Channels
 ==============
 
+[![Go Reference](https://pkg.go.dev/badge/github.com/spakin/color-channels.svg)](https://pkg.go.dev/github.com/spakin/color-channels)
 [![Go Report Card](https://goreportcard.com/badge/github.com/spakin/color-channels)](https://goreportcard.com/report/github.com/spakin/color-channels)
 
 Color Channels is a simple, command-line program that can
