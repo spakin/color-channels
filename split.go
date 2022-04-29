@@ -14,27 +14,27 @@ import (
 
 // A ImageInfo represents a channel name and image data.
 type ImageInfo struct {
-	Name  string      // Channel name
-	Image *image.Gray // Grayscale image representing a channel
+	Name  string        // Channel name
+	Image *image.Gray16 // Grayscale image representing a channel
 }
 
-// toGrayVal converts a float64 in [0.0, 1.0] to a color.Gray, clamping if
+// toGrayVal converts a float64 in [0.0, 1.0] to a color.Gray16, clamping if
 // necessary.
-func toGrayVal(f float64) color.Gray {
+func toGrayVal(f float64) color.Gray16 {
 	if f < 0.0 {
-		return color.Gray{Y: 0}
+		return color.Gray16{Y: 0}
 	}
 	if f > 1.0 {
-		return color.Gray{Y: 255}
+		return color.Gray16{Y: 65535}
 	}
-	return color.Gray{Y: uint8(f * 255.0)}
+	return color.Gray16{Y: uint16(f * 65535.0)}
 }
 
 // allocGrays allocates an array of N grayscale images of a given size.
-func allocGrays(bnds image.Rectangle, n int) []*image.Gray {
-	grays := make([]*image.Gray, n)
+func allocGrays(bnds image.Rectangle, n int) []*image.Gray16 {
+	grays := make([]*image.Gray16, n)
 	for i := range grays {
-		grays[i] = image.NewGray(bnds)
+		grays[i] = image.NewGray16(bnds)
 	}
 	return grays
 }
@@ -194,11 +194,11 @@ func SplitXYZ(img image.Image) []ImageInfo {
 // ImageInfo.
 func ExtractAlpha(img image.Image) ImageInfo {
 	bnds := img.Bounds()
-	gray := image.NewGray(bnds)
+	gray := image.NewGray16(bnds)
 	for y := bnds.Min.Y; y < bnds.Max.Y; y++ {
 		for x := bnds.Min.X; x < bnds.Max.X; x++ {
-			clr := color.NRGBAModel.Convert(img.At(x, y)).(color.NRGBA)
-			gray.SetGray(x, y, color.Gray{Y: clr.A})
+			clr := color.NRGBA64Model.Convert(img.At(x, y)).(color.NRGBA64)
+			gray.SetGray16(x, y, color.Gray16{Y: clr.A})
 		}
 	}
 	return ImageInfo{

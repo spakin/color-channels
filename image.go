@@ -30,13 +30,13 @@ func ReadImage(fn string) image.Image {
 
 // ReadGrayscaleImage reads a grayscale image from a named file.  It aborts on
 // error.
-func ReadGrayscaleImage(fn string) *image.Gray {
+func ReadGrayscaleImage(fn string) *image.Gray16 {
 	// Read a generic image.
 	img := ReadImage(fn)
 
 	// Convert the image to grayscale.
 	bnds := img.Bounds()
-	gray := image.NewGray(bnds)
+	gray := image.NewGray16(bnds)
 	for y := bnds.Min.Y; y < bnds.Max.Y; y++ {
 		for x := bnds.Min.X; x < bnds.Max.X; x++ {
 			gray.Set(x, y, img.At(x, y))

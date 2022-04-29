@@ -11,14 +11,14 @@ import (
 )
 
 // MergeHCL merges H, C, and L channels into a single image.
-func MergeHCL(imgs []*image.Gray, wref [3]float64) image.Image {
+func MergeHCL(imgs []*image.Gray16, wref [3]float64) image.Image {
 	bnds := imgs[0].Bounds()
 	merged := image.NewNRGBA(bnds)
 	for y := bnds.Min.Y; y < bnds.Max.Y; y++ {
 		for x := bnds.Min.X; x < bnds.Max.X; x++ {
-			h := float64(imgs[0].GrayAt(x, y).Y) * 360.0 / 255.0
-			c := float64(imgs[1].GrayAt(x, y).Y) / 255.0
-			l := float64(imgs[2].GrayAt(x, y).Y) / 255.0
+			h := float64(imgs[0].Gray16At(x, y).Y) * 360.0 / 65535.0
+			c := float64(imgs[1].Gray16At(x, y).Y) / 65535.0
+			l := float64(imgs[2].Gray16At(x, y).Y) / 65535.0
 			clr := colorful.HclWhiteRef(h, c, l, wref).Clamped()
 			merged.Set(x, y, clr)
 		}
@@ -27,14 +27,14 @@ func MergeHCL(imgs []*image.Gray, wref [3]float64) image.Image {
 }
 
 // MergeLab merges L*, a*, and b* channels into a single image.
-func MergeLab(imgs []*image.Gray, wref [3]float64) image.Image {
+func MergeLab(imgs []*image.Gray16, wref [3]float64) image.Image {
 	bnds := imgs[0].Bounds()
 	merged := image.NewNRGBA(bnds)
 	for y := bnds.Min.Y; y < bnds.Max.Y; y++ {
 		for x := bnds.Min.X; x < bnds.Max.X; x++ {
-			L := float64(imgs[0].GrayAt(x, y).Y) / 255.0
-			a := float64(imgs[1].GrayAt(x, y).Y)*2.0/255.0 - 1.0
-			b := float64(imgs[2].GrayAt(x, y).Y)*2.0/255.0 - 1.0
+			L := float64(imgs[0].Gray16At(x, y).Y) / 65535.0
+			a := float64(imgs[1].Gray16At(x, y).Y)*2.0/65535.0 - 1.0
+			b := float64(imgs[2].Gray16At(x, y).Y)*2.0/65535.0 - 1.0
 			clr := colorful.LabWhiteRef(L, a, b, wref).Clamped()
 			merged.Set(x, y, clr)
 		}
@@ -43,14 +43,14 @@ func MergeLab(imgs []*image.Gray, wref [3]float64) image.Image {
 }
 
 // MergeLuv merges L*, u*, and v* channels into a single image.
-func MergeLuv(imgs []*image.Gray, wref [3]float64) image.Image {
+func MergeLuv(imgs []*image.Gray16, wref [3]float64) image.Image {
 	bnds := imgs[0].Bounds()
 	merged := image.NewNRGBA(bnds)
 	for y := bnds.Min.Y; y < bnds.Max.Y; y++ {
 		for x := bnds.Min.X; x < bnds.Max.X; x++ {
-			L := float64(imgs[0].GrayAt(x, y).Y) / 255.0
-			u := float64(imgs[1].GrayAt(x, y).Y)*2.0/255.0 - 1.0
-			v := float64(imgs[2].GrayAt(x, y).Y)*2.0/255.0 - 1.0
+			L := float64(imgs[0].Gray16At(x, y).Y) / 65535.0
+			u := float64(imgs[1].Gray16At(x, y).Y)*2.0/65535.0 - 1.0
+			v := float64(imgs[2].Gray16At(x, y).Y)*2.0/65535.0 - 1.0
 			clr := colorful.LuvWhiteRef(L, u, v, wref).Clamped()
 			merged.Set(x, y, clr)
 		}
@@ -59,14 +59,14 @@ func MergeLuv(imgs []*image.Gray, wref [3]float64) image.Image {
 }
 
 // MergeXyy merges x, y, and Y channels into a single image.
-func MergeXyy(imgs []*image.Gray) image.Image {
+func MergeXyy(imgs []*image.Gray16) image.Image {
 	bnds := imgs[0].Bounds()
 	merged := image.NewNRGBA(bnds)
 	for r := bnds.Min.Y; r < bnds.Max.Y; r++ {
 		for c := bnds.Min.X; c < bnds.Max.X; c++ {
-			x := float64(imgs[0].GrayAt(c, r).Y) / 255.0
-			y := float64(imgs[1].GrayAt(c, r).Y) / 255.0
-			Y := float64(imgs[2].GrayAt(c, r).Y) / 255.0
+			x := float64(imgs[0].Gray16At(c, r).Y) / 65535.0
+			y := float64(imgs[1].Gray16At(c, r).Y) / 65535.0
+			Y := float64(imgs[2].Gray16At(c, r).Y) / 65535.0
 			clr := colorful.Xyy(x, y, Y).Clamped()
 			merged.Set(c, r, clr)
 		}
@@ -75,14 +75,14 @@ func MergeXyy(imgs []*image.Gray) image.Image {
 }
 
 // MergeHSL merges H, S, and L channels into a single image.
-func MergeHSL(imgs []*image.Gray) image.Image {
+func MergeHSL(imgs []*image.Gray16) image.Image {
 	bnds := imgs[0].Bounds()
 	merged := image.NewNRGBA(bnds)
 	for y := bnds.Min.Y; y < bnds.Max.Y; y++ {
 		for x := bnds.Min.X; x < bnds.Max.X; x++ {
-			h := float64(imgs[0].GrayAt(x, y).Y) * 360.0 / 255.0
-			s := float64(imgs[1].GrayAt(x, y).Y) / 255.0
-			l := float64(imgs[2].GrayAt(x, y).Y) / 255.0
+			h := float64(imgs[0].Gray16At(x, y).Y) * 360.0 / 65535.0
+			s := float64(imgs[1].Gray16At(x, y).Y) / 65535.0
+			l := float64(imgs[2].Gray16At(x, y).Y) / 65535.0
 			clr := colorful.Hsl(h, s, l).Clamped()
 			merged.Set(x, y, clr)
 		}
@@ -91,14 +91,14 @@ func MergeHSL(imgs []*image.Gray) image.Image {
 }
 
 // MergeHSLuv merges H, S, and L channels into a single image.
-func MergeHSLuv(imgs []*image.Gray) image.Image {
+func MergeHSLuv(imgs []*image.Gray16) image.Image {
 	bnds := imgs[0].Bounds()
 	merged := image.NewNRGBA(bnds)
 	for y := bnds.Min.Y; y < bnds.Max.Y; y++ {
 		for x := bnds.Min.X; x < bnds.Max.X; x++ {
-			h := float64(imgs[0].GrayAt(x, y).Y) * 360.0 / 255.0
-			s := float64(imgs[1].GrayAt(x, y).Y) / 255.0
-			l := float64(imgs[2].GrayAt(x, y).Y) / 255.0
+			h := float64(imgs[0].Gray16At(x, y).Y) * 360.0 / 65535.0
+			s := float64(imgs[1].Gray16At(x, y).Y) / 65535.0
+			l := float64(imgs[2].Gray16At(x, y).Y) / 65535.0
 			clr := colorful.HSLuv(h, s, l).Clamped()
 			merged.Set(x, y, clr)
 		}
@@ -107,14 +107,14 @@ func MergeHSLuv(imgs []*image.Gray) image.Image {
 }
 
 // MergeLinRGB merges R, G, and B channels into a single image.
-func MergeLinRGB(imgs []*image.Gray) image.Image {
+func MergeLinRGB(imgs []*image.Gray16) image.Image {
 	bnds := imgs[0].Bounds()
 	merged := image.NewNRGBA(bnds)
 	for y := bnds.Min.Y; y < bnds.Max.Y; y++ {
 		for x := bnds.Min.X; x < bnds.Max.X; x++ {
-			r := float64(imgs[0].GrayAt(x, y).Y) / 255.0
-			g := float64(imgs[1].GrayAt(x, y).Y) / 255.0
-			b := float64(imgs[2].GrayAt(x, y).Y) / 255.0
+			r := float64(imgs[0].Gray16At(x, y).Y) / 65535.0
+			g := float64(imgs[1].Gray16At(x, y).Y) / 65535.0
+			b := float64(imgs[2].Gray16At(x, y).Y) / 65535.0
 			clr := colorful.LinearRgb(r, g, b).Clamped()
 			merged.Set(x, y, clr)
 		}
@@ -123,15 +123,15 @@ func MergeLinRGB(imgs []*image.Gray) image.Image {
 }
 
 // MergeRGB merges R, G, and B channels into a single image.
-func MergeRGB(imgs []*image.Gray) image.Image {
+func MergeRGB(imgs []*image.Gray16) image.Image {
 	bnds := imgs[0].Bounds()
-	merged := image.NewNRGBA(bnds)
+	merged := image.NewNRGBA64(bnds)
 	for y := bnds.Min.Y; y < bnds.Max.Y; y++ {
 		for x := bnds.Min.X; x < bnds.Max.X; x++ {
-			r := imgs[0].GrayAt(x, y).Y
-			g := imgs[1].GrayAt(x, y).Y
-			b := imgs[2].GrayAt(x, y).Y
-			clr := color.NRGBA{r, g, b, 255}
+			r := imgs[0].Gray16At(x, y).Y
+			g := imgs[1].Gray16At(x, y).Y
+			b := imgs[2].Gray16At(x, y).Y
+			clr := color.NRGBA64{r, g, b, 65535}
 			merged.Set(x, y, clr)
 		}
 	}
@@ -139,14 +139,14 @@ func MergeRGB(imgs []*image.Gray) image.Image {
 }
 
 // MergeSRGB merges R, G, and B channels into a single image.
-func MergeSRGB(imgs []*image.Gray) image.Image {
+func MergeSRGB(imgs []*image.Gray16) image.Image {
 	bnds := imgs[0].Bounds()
 	merged := image.NewNRGBA(bnds)
 	for y := bnds.Min.Y; y < bnds.Max.Y; y++ {
 		for x := bnds.Min.X; x < bnds.Max.X; x++ {
-			r := float64(imgs[0].GrayAt(x, y).Y) / 255.0
-			g := float64(imgs[1].GrayAt(x, y).Y) / 255.0
-			b := float64(imgs[2].GrayAt(x, y).Y) / 255.0
+			r := float64(imgs[0].Gray16At(x, y).Y) / 65535.0
+			g := float64(imgs[1].Gray16At(x, y).Y) / 65535.0
+			b := float64(imgs[2].Gray16At(x, y).Y) / 65535.0
 			clr := colorful.Color{R: r, G: g, B: b}
 			merged.Set(x, y, clr)
 		}
@@ -155,15 +155,19 @@ func MergeSRGB(imgs []*image.Gray) image.Image {
 }
 
 // MergeCMYK merges C, M, Y, and K channels into a single image.
-func MergeCMYK(imgs []*image.Gray) image.Image {
+func MergeCMYK(imgs []*image.Gray16) image.Image {
 	bnds := imgs[0].Bounds()
 	merged := image.NewNRGBA(bnds)
 	for y := bnds.Min.Y; y < bnds.Max.Y; y++ {
 		for x := bnds.Min.X; x < bnds.Max.X; x++ {
-			c := imgs[0].GrayAt(x, y).Y
-			m := imgs[1].GrayAt(x, y).Y
-			w := imgs[2].GrayAt(x, y).Y // y is already taken.
-			k := imgs[3].GrayAt(x, y).Y
+			// At the time of this writing, image/color provides
+			// only an 8-bit CMYK-to-RGB converter so we
+			// reluctantly discard the lower 8 bits of CMYK
+			// information.
+			c := uint8(imgs[0].Gray16At(x, y).Y >> 8)
+			m := uint8(imgs[1].Gray16At(x, y).Y >> 8)
+			w := uint8(imgs[2].Gray16At(x, y).Y >> 8) // y is already taken.
+			k := uint8(imgs[3].Gray16At(x, y).Y >> 8)
 			r, g, b := color.CMYKToRGB(c, m, w, k)
 			clr := color.NRGBA{r, g, b, 255}
 			merged.Set(x, y, clr)
@@ -173,14 +177,18 @@ func MergeCMYK(imgs []*image.Gray) image.Image {
 }
 
 // MergeYCbCr merges Y, Cb, and Cr channels into a single image.
-func MergeYCbCr(imgs []*image.Gray) image.Image {
+func MergeYCbCr(imgs []*image.Gray16) image.Image {
 	bnds := imgs[0].Bounds()
 	merged := image.NewNRGBA(bnds)
 	for y := bnds.Min.Y; y < bnds.Max.Y; y++ {
 		for x := bnds.Min.X; x < bnds.Max.X; x++ {
-			l := imgs[0].GrayAt(x, y).Y // y is already taken.
-			cb := imgs[1].GrayAt(x, y).Y
-			cr := imgs[2].GrayAt(x, y).Y
+			// At the time of this writing, image/color provides
+			// only an 8-bit Y'CbCr-to-RGB converter so we
+			// reluctantly discard the lower 8 bits of Y'CbCr.
+			// information.
+			l := uint8(imgs[0].Gray16At(x, y).Y >> 8) // y is already taken.
+			cb := uint8(imgs[1].Gray16At(x, y).Y >> 8)
+			cr := uint8(imgs[2].Gray16At(x, y).Y >> 8)
 			r, g, b := color.YCbCrToRGB(l, cb, cr)
 			clr := color.NRGBA{r, g, b, 255}
 			merged.Set(x, y, clr)
@@ -191,14 +199,14 @@ func MergeYCbCr(imgs []*image.Gray) image.Image {
 
 // AddAlpha replaces an image's alpha channel with a separately specified alpha
 // channel.
-func AddAlpha(img image.Image, alpha *image.Gray) image.Image {
+func AddAlpha(img image.Image, alpha *image.Gray16) image.Image {
 	bnds := img.Bounds()
-	newImg := image.NewNRGBA(bnds)
+	newImg := image.NewNRGBA64(bnds)
 	for y := bnds.Min.Y; y < bnds.Max.Y; y++ {
 		for x := bnds.Min.X; x < bnds.Max.X; x++ {
 			clr := img.At(x, y)
-			nrgba := color.NRGBAModel.Convert(clr).(color.NRGBA)
-			nrgba.A = alpha.GrayAt(x, y).Y
+			nrgba := color.NRGBA64Model.Convert(clr).(color.NRGBA64)
+			nrgba.A = alpha.Gray16At(x, y).Y
 			newImg.Set(x, y, nrgba)
 		}
 	}
@@ -206,14 +214,14 @@ func AddAlpha(img image.Image, alpha *image.Gray) image.Image {
 }
 
 // MergeXYZ merges X, Y, and Z channels into a single image.
-func MergeXYZ(imgs []*image.Gray) image.Image {
+func MergeXYZ(imgs []*image.Gray16) image.Image {
 	bnds := imgs[0].Bounds()
 	merged := image.NewNRGBA(bnds)
 	for r := bnds.Min.Y; r < bnds.Max.Y; r++ {
 		for c := bnds.Min.X; c < bnds.Max.X; c++ {
-			x := float64(imgs[0].GrayAt(c, r).Y) / 255.0
-			y := float64(imgs[1].GrayAt(c, r).Y) / 255.0
-			z := float64(imgs[2].GrayAt(c, r).Y) / 255.0
+			x := float64(imgs[0].Gray16At(c, r).Y) / 65535.0
+			y := float64(imgs[1].Gray16At(c, r).Y) / 65535.0
+			z := float64(imgs[2].Gray16At(c, r).Y) / 65535.0
 			clr := colorful.Xyz(x, y, z).Clamped()
 			merged.Set(c, r, clr)
 		}
@@ -243,7 +251,7 @@ func MergeChannels(p *Parameters) {
 	}
 
 	// Read all the color-channel images.
-	channels := make([]*image.Gray, 0, 4)
+	channels := make([]*image.Gray16, 0, 4)
 	for _, fn := range p.InputNames {
 		g := ReadGrayscaleImage(fn)
 		channels = append(channels, g)
