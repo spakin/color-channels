@@ -207,25 +207,9 @@ func ExtractAlpha(img image.Image) ImageInfo {
 	}
 }
 
-// SplitImage splits an image into separate channel images.  It aborts on error.
-func SplitImage(p *Parameters) {
-	// Ensure we have exactly one input file.
-	if len(p.InputNames) != 1 {
-		notify.Fatalf("Expected 1 input file but saw %d", len(p.InputNames))
-	}
-
-	// Ensure the output file contains a "%s".
-	if p.OutputName == "" {
-		notify.Fatal("An output-file template must be specified when --split is used")
-	}
-	if !strings.Contains(p.OutputName, "%s") {
-		notify.Fatalf(`With --split, the output file must contain "%%s"`)
-	}
-
-	// Read the input image.
-	inImg := ReadImage(p.InputNames[0])
-
-	// Split the input image into multiple grayscale images.
+// performImageSplit is a helper function for SplitImage that invokes
+// the appropriate image-splitting function.
+func performImageSplit(p *Parameters, inImg image.Image) []ImageInfo {
 	var outImgs []ImageInfo
 	switch p.ColorSpace {
 	case "cmyk":
@@ -255,6 +239,29 @@ func SplitImage(p *Parameters) {
 	default:
 		panic("Internal error: unimplemented color space")
 	}
+	return outImgs
+}
+
+// SplitImage splits an image into separate channel images.  It aborts on error.
+func SplitImage(p *Parameters) {
+	// Ensure we have exactly one input file.
+	if len(p.InputNames) != 1 {
+		notify.Fatalf("Expected 1 input file but saw %d", len(p.InputNames))
+	}
+
+	// Ensure the output file contains a "%s".
+	if p.OutputName == "" {
+		notify.Fatal("An output-file template must be specified when --split is used")
+	}
+	if !strings.Contains(p.OutputName, "%s") {
+		notify.Fatalf(`With --split, the output file must contain "%%s"`)
+	}
+
+	// Read the input image.
+	inImg := ReadImage(p.InputNames[0])
+
+	// Split the input image into multiple grayscale images.
+	outImgs := performImageSplit(p, inImg)
 
 	// Optionally include an alpha channel.
 	if p.Alpha {

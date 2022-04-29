@@ -1,6 +1,8 @@
 Color Channels
 ==============
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/spakin/color-channels)](https://goreportcard.com/report/github.com/spakin/color-channels)
+
 Color Channels is a simple, command-line program that can
 
 1. separate a color image into multiple grayscale images, each representing a single color channel, and

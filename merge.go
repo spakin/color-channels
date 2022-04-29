@@ -229,9 +229,9 @@ func MergeXYZ(imgs []*image.Gray16) image.Image {
 	return merged
 }
 
-// MergeChannels merges the input files into a single output file.  It aborts
-// on error.
-func MergeChannels(p *Parameters) {
+// readChannelFiles reads one or more color-channel images and returns them as
+// 16-bit grayscale images.  It aborts on error.
+func readChannelFiles(p *Parameters) []*image.Gray16 {
 	// Ensure we have the correct number of input files.
 	nIn := len(p.InputNames)
 	wrongArgsFmt := "Expected %d input files for --space=%q but saw %d"
@@ -264,8 +264,12 @@ func MergeChannels(p *Parameters) {
 			notify.Fatal("All input images must have the same dimensions")
 		}
 	}
+	return channels
+}
 
-	// Merge the channels.
+// performChannelMerge is a helper function for MergeChannels that invokes the
+// appropriate channel-merging function.
+func performChannelMerge(p *Parameters, channels []*image.Gray16) image.Image {
 	var merged image.Image
 	switch p.ColorSpace {
 	case "cmyk":
@@ -295,6 +299,17 @@ func MergeChannels(p *Parameters) {
 	default:
 		panic("Internal error: unimplemented color space")
 	}
+	return merged
+}
+
+// MergeChannels merges the input files into a single output file.  It aborts
+// on error.
+func MergeChannels(p *Parameters) {
+	// Read the per-channel files we were asked to merge.
+	channels := readChannelFiles(p)
+
+	// Merge the color channels.
+	merged := performChannelMerge(p, channels)
 
 	// If an alpha channel was included, insert it into the image.
 	if p.Alpha {
